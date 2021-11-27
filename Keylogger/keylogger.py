@@ -4,8 +4,8 @@ import smtplib, ssl, time, threading
 
 # statics
 FILE_NAME = "pulsaciones_grabadas.txt"
-SEND_EMAIL_TIME = 10
-MAX_INACTIVE_TIME = 5
+SEND_EMAIL_TIME = 2*60*60
+MAX_INACTIVE_TIME = 2*60
 TIMER_ACCURACY = 0.5
 
 # global variables
